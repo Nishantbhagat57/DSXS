@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import optparse, random, re, string, urllib, urllib.parse, urllib.request  # Python 3 required
+import concurrent.futures
 
 NAME, VERSION, AUTHOR, LICENSE = "Damn Small XSS Scanner (DSXS) < 100 LoC (Lines of Code)", "0.3c", "Miroslav Stampar (@stamparm)", "Public domain (FREE)"
 
@@ -95,10 +96,18 @@ if __name__ == "__main__":
     if options.file:  # If file option is used
         with open(options.file, 'r') as f:
             urls = f.readlines()
-        for url in urls:
-            url = url.strip()  # Remove any extra spaces or newlines 
-            init_options(options.proxy, options.cookie, options.ua, options.referer)
-            result = scan_page(url if url.startswith("http") else "http://%s" % url, options.data)
+
+        init_options(options.proxy, options.cookie, options.ua, options.referer)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            future_to_url = {executor.submit(scan_page, url.strip() if url.startswith("http") else f"http://{url.strip()}", options.data): url for url in urls}
+
+            for future in concurrent.futures.as_completed(future_to_url):
+                url = future_to_url[future]
+                try:
+                    future.result()  # returns the results of your scan_page function
+                except Exception as e:
+                    print(f"An error occurred during the scanning of {url}: {e}")
     elif options.url:
         init_options(options.proxy, options.cookie, options.ua, options.referer)
         result = scan_page(options.url if options.url.startswith("http") else "http://%s" % options.url, options.data)
