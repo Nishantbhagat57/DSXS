@@ -85,15 +85,22 @@ def init_options(proxy=None, cookie=None, ua=None, referer=None):
 if __name__ == "__main__":
     parser = optparse.OptionParser(version=VERSION)
     parser.add_option("-u", "--url", dest="url", help="Target URL (e.g. \"http://www.target.com/page.php?id=1\")")
+    parser.add_option("--file", dest="file", help="File containing list of URLs")
     parser.add_option("--data", dest="data", help="POST data (e.g. \"query=test\")")
     parser.add_option("--cookie", dest="cookie", help="HTTP Cookie header value")
     parser.add_option("--user-agent", dest="ua", help="HTTP User-Agent header value")
     parser.add_option("--referer", dest="referer", help="HTTP Referer header value")
     parser.add_option("--proxy", dest="proxy", help="HTTP proxy address (e.g. \"http://127.0.0.1:8080\")")
     options, _ = parser.parse_args()
-    if options.url:
+    if options.file:  # If file option is used
+        with open(options.file, 'r') as f:
+            urls = f.readlines()
+        for url in urls:
+            url = url.strip()  # Remove any extra spaces or newlines 
+            init_options(options.proxy, options.cookie, options.ua, options.referer)
+            result = scan_page(url if url.startswith("http") else "http://%s" % url, options.data)
+    elif options.url:
         init_options(options.proxy, options.cookie, options.ua, options.referer)
         result = scan_page(options.url if options.url.startswith("http") else "http://%s" % options.url, options.data)
-        print("\nscan results: %s vulnerabilities found" % ("possible" if result else "no"))
     else:
         parser.print_help()
