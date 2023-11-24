@@ -99,7 +99,7 @@ if __name__ == "__main__":
 
         init_options(options.proxy, options.cookie, options.ua, options.referer)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
             future_to_url = {executor.submit(scan_page, url.strip() if url.startswith("http") else f"http://{url.strip()}", options.data): url for url in urls}
 
             for future in concurrent.futures.as_completed(future_to_url):
