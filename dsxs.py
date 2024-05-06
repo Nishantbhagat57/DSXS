@@ -49,7 +49,7 @@ def scan_page(url, data=None):
     original = re.sub(DOM_FILTER_REGEX, "", _retrieve_content(url, data))
     dom = next(filter(None, (re.search(_, original) for _ in DOM_PATTERNS)), None)
     if dom:
-        print(" (i) page itself appears to be XSS vulnerable (DOM)")
+        print(" (i) %s page itself appears to be XSS vulnerable (DOM)" % url)
         print("  (o) ...%s..." % dom.group(0))
         retval = True
     try:
