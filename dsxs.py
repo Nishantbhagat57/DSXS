@@ -2,6 +2,7 @@
 import optparse, random, re, string, urllib, urllib.parse, urllib.request  # Python 3 required
 import concurrent.futures
 import mimetypes
+import re
 
 NAME, VERSION, AUTHOR, LICENSE = "Damn Small XSS Scanner (DSXS) EDITED @nishant57", "0.3c", "Miroslav Stampar (@stamparm)", "Public domain (FREE)"
 
@@ -34,23 +35,25 @@ _headers = {}                                                                   
 
 # Function to check if the content type is binary or JSON
 def is_binary_or_json_content(content_type):
-    binary_mime_types = [
-        "application/pdf", "application/zip", "application/octet-stream",
-        "application/x-tar", "application/vnd.rar", "application/gzip",
-        "application/epub+zip", "application/x-bzip", "application/x-bzip2",
-        "application/x-freearc", "application/x-7z-compressed",
-        "image/", "audio/", "video/", "font/"
-    ]
-    
-    json_mime_types = [
-        "application/json", "application/vnd.api+json"
-    ]
-    
+    # Normalize content type by stripping parameters
     if content_type:
+        content_type = content_type.split(';')[0].strip()  # Get the main type, ignoring parameters
+
+        binary_mime_types = [
+            "application/pdf", "application/zip", "application/octet-stream",
+            "application/x-tar", "application/vnd.rar", "application/gzip",
+            "application/epub+zip", "application/x-bzip", "application/x-bzip2",
+            "application/x-freearc", "application/x-7z-compressed",
+            "image/", "audio/", "video/", "font/"
+        ]
+        
+        json_mime_types = [
+            "application/json", "application/vnd.api+json"
+        ]
+        
         return any(content_type.startswith(mime) for mime in binary_mime_types) or \
                content_type in json_mime_types
     return False
-
 
 def _retrieve_content(url, data=None):
     try:
