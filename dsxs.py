@@ -44,6 +44,7 @@ def is_binary_or_json_content(content_type):
             "application/x-tar", "application/vnd.rar", "application/gzip",
             "application/epub+zip", "application/x-bzip", "application/x-bzip2",
             "application/x-freearc", "application/x-7z-compressed",
+            "text/javascript",
             "image/", "audio/", "video/", "font/"
         ]
         
