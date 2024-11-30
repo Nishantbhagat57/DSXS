@@ -1,8 +1,9 @@
 #!/usr/bin/python3
 import optparse, random, re, string, urllib, urllib.parse, urllib.request  # Python 3 required
 import concurrent.futures
+import mimetypes
 
-NAME, VERSION, AUTHOR, LICENSE = "Damn Small XSS Scanner (DSXS) < 100 LoC (Lines of Code)", "0.3c", "Miroslav Stampar (@stamparm)", "Public domain (FREE)"
+NAME, VERSION, AUTHOR, LICENSE = "Damn Small XSS Scanner (DSXS) EDITED @nishant57", "0.3c", "Miroslav Stampar (@stamparm)", "Public domain (FREE)"
 
 SMALLER_CHAR_POOL    = ('<', '>')                                                           # characters used for XSS tampering of parameter values (smaller set - for avoiding possible SQLi errors)
 LARGER_CHAR_POOL     = ('\'', '"', '>', '<', ';')                                           # characters used for XSS tampering of parameter values (larger set)
@@ -31,10 +32,39 @@ DOM_PATTERNS = (                                                                
 
 _headers = {}                                                                               # used for storing dictionary with optional header values
 
+# Function to check if the content type is binary or JSON
+def is_binary_or_json_content(content_type):
+    binary_mime_types = [
+        "application/pdf", "application/zip", "application/octet-stream",
+        "application/x-tar", "application/vnd.rar", "application/gzip",
+        "application/epub+zip", "application/x-bzip", "application/x-bzip2",
+        "application/x-freearc", "application/x-7z-compressed",
+        "image/", "audio/", "video/", "font/"
+    ]
+    
+    json_mime_types = [
+        "application/json", "application/vnd.api+json"
+    ]
+    
+    if content_type:
+        return any(content_type.startswith(mime) for mime in binary_mime_types) or \
+               content_type in json_mime_types
+    return False
+
+
 def _retrieve_content(url, data=None):
     try:
         req = urllib.request.Request("".join(url[i].replace(' ', "%20") if i > url.find('?') else url[i] for i in range(len(url))), data.encode("utf8", "ignore") if data else None, _headers)
-        retval = urllib.request.urlopen(req, timeout=TIMEOUT).read()
+        response = urllib.request.urlopen(req, timeout=TIMEOUT)
+        content_type = response.headers.get('Content-Type', '')
+        retval = response.read()
+        
+        # Check if the response is binary or JSON
+        if is_binary_or_json_content(content_type):
+            print(f"Skipping scan for {url}: response is binary or JSON.")
+            return ""
+        
+        return retval.decode("utf8", "ignore") if hasattr(retval, "decode") else ""
     except Exception as ex:
         retval = ex.read() if hasattr(ex, "read") else str(ex.args[-1])
     return (retval.decode("utf8", "ignore") if hasattr(retval, "decode") else "") or ""
